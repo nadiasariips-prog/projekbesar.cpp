@@ -93,3 +93,81 @@ void drawGame(int highScore) {
     mvaddch((int)ballY, (int)ballX, 'O');
     refresh();
 }
+
+// UPDATE BALL (VERSI STABIL) 
+void updateBall() {
+    ballX += velX;
+    ballY += velY;
+    // Dinding kiri & kanan
+    if (ballX <= 0) {
+        ballX = 1;
+        velX *= -1;
+    }
+    else if (ballX >= maxX - 1) {
+        ballX = maxX - 2;
+        velX *= -1;
+    }
+    // Dinding atas
+    if (ballY <= 1) {
+        ballY = 2;
+        velY *= -1;
+    }
+    // PANTULAN PADDLE (FIX BUG)
+    if (velY > 0 &&                          
+        ballY >= paddleY - 1 &&
+        ballY <= paddleY &&
+        ballX >= paddleX &&
+        ballX <= paddleX + paddleWidth)
+    {
+        velY = -fabs(velY);                  
+        ballY = paddleY - 1;                
+
+        float center = paddleX + paddleWidth / 2.0f;
+        velX += (ballX - center) * 0.05f;
+
+        if (velX > 2.0f) velX = 2.0f;
+        if (velX < -2.0f) velX = -2.0f;
+    }
+
+    // TABRAKAN BRICK
+    for (auto &b : bricks) {
+        if (b.alive &&
+            (int)ballY == b.y &&
+            ballX >= b.x &&
+            ballX <= b.x + 4)
+        {
+            b.alive = false;
+            velY *= -1;
+            score += 10;
+            break;
+        }
+    }
+}
+
+// CEK STATUS GAME
+bool isWin() {
+    for (auto &b : bricks)
+        if (b.alive) return false;
+    return true;
+}
+
+bool isGameOver() {
+    return (int)ballY >= maxY - 1;
+}
+
+// HIGH SCORE
+int loadHighScore() {
+    int highScore = 0;
+    ifstream f("highscore.txt");
+    if (f.is_open()) {
+        f >> highScore;
+        f.close();
+    }
+    return highScore;
+}
+
+void saveHighScore(int highScore) {
+    ofstream f("highscore.txt");
+    f << highScore;
+    f.close();
+}
